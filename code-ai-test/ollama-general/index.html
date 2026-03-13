@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Ollama Chat — qwen3:0.6b</title>
+	<style>
+		:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+		body{margin:0;padding:20px;background:#f7f7fb;color:#111}
+		.chat{max-width:820px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(20,20,50,.08);overflow:hidden}
+		header{padding:16px 20px;border-bottom:1px solid #eef; font-weight:600}
+		#messages{height:60vh;overflow:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+		.msg{max-width:82%;padding:10px 12px;border-radius:10px;line-height:1.4}
+		.msg.user{align-self:flex-end;background:#0078d4;color:white;border-bottom-right-radius:4px}
+		.msg.assistant{align-self:flex-start;background:#f1f5ff;color:#06102b}
+		.msg.error{align-self:center;background:#ffecec;color:#6b0000}
+		.controls{display:flex;flex-direction:column;padding:12px 16px;border-top:1px solid #eef;gap:8px}
+		.controls input[type=text]{padding:8px;border:1px solid #dde; border-radius:6px}
+		.controls textarea{min-height:80px;padding:8px;border:1px solid #dde;border-radius:6px;resize:vertical}
+		.controls .row{display:flex;gap:8px}
+		.controls button{background:#0b5fff;color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+		footer{font-size:12px;color:#666;padding:10px 16px;border-top:1px solid #f0f2f8}
+	</style>
+</head>
+<body>
+	<div class="chat">
+		<header>Ollama Chat — qwen3:0.6b</header>
+		<div id="messages" aria-live="polite"></div>
+
+		<div class="controls">
+			<input id="system" type="text" placeholder="System prompt (optional) — e.g. You are a helpful assistant." />
+			<textarea id="input" placeholder="Type a message and press Enter to send (Shift+Enter for newline)"></textarea>
+			<div class="row">
+				<button id="send">Send</button>
+				<div style="flex:1;color:#666;padding-top:10px;font-size:13px">Model: <strong>qwen3:0.6b</strong> — API: <code>http://localhost:11434/api/chat</code></div>
+			</div>
+		</div>
+
+		<footer>Open this file in a browser. Ensure Ollama is running locally at port 11434 and allows requests from this page.</footer>
+	</div>
+
+	<script>
+		const model = 'qwen3:0.6b';
+		const msgsEl = document.getElementById('messages');
+		const inputEl = document.getElementById('input');
+		const systemEl = document.getElementById('system');
+		const sendBtn = document.getElementById('send');
+
+		function addMessage(role, text){
+			const el = document.createElement('div');
+			el.className = 'msg ' + role;
+			el.textContent = text;
+			msgsEl.appendChild(el);
+			msgsEl.scrollTop = msgsEl.scrollHeight;
+			return el;
+		}
+
+		async function send(){
+			const text = inputEl.value.trim();
+			if(!text) return;
+			addMessage('user', text);
+			inputEl.value = '';
+			sendBtn.disabled = true;
+
+			const thinkingEl = addMessage('assistant', 'Thinking... 0.0s');
+			let start = performance.now();
+			let timer = setInterval(()=>{
+				const s = ((performance.now()-start)/1000).toFixed(1);
+				thinkingEl.textContent = `Thinking... ${s}s`;
+			}, 120);
+
+			const system = systemEl.value.trim();
+			const body = {
+				model,
+				messages: [
+					...(system ? [{role:'system', content: system}] : []),
+					{role:'user', content: text}
+				],
+				stream: false
+			};
+
+			try{
+				const res = await fetch('http://localhost:11434/api/chat', {
+					method: 'POST',
+					headers: {'Content-Type':'application/json'},
+					body: JSON.stringify(body)
+				});
+
+				const took = ((performance.now()-start)/1000).toFixed(2);
+
+				if(!res.ok){
+					clearInterval(timer);
+					const err = await res.text();
+					thinkingEl.className = 'msg error';
+					thinkingEl.textContent = `Error ${res.status}: ${err}`;
+					return;
+				}
+
+				const data = await res.json();
+				const reply = data?.message?.content ?? data?.content ?? JSON.stringify(data);
+				clearInterval(timer);
+				thinkingEl.className = 'msg assistant';
+				thinkingEl.textContent = `${reply}  — (took ${took}s)`;
+			}catch(e){
+				clearInterval(timer);
+				thinkingEl.className = 'msg error';
+				thinkingEl.textContent = 'Request failed: ' + (e.message || e);
+			}finally{
+				sendBtn.disabled = false;
+			}
+		}
+
+		sendBtn.addEventListener('click', send);
+		inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
+	</script>
+</body>
+</html>
+

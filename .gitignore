@@ -1,0 +1,2 @@
+# Ignore local raw video assets (too large for GitHub)
+videos/

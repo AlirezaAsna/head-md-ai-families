@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Geneva Police Computer Simulation</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Consolas", "Courier New", monospace;
+        background: #05090f;
+        color: #9df7ff;
+      }
+
+      .terminal {
+        max-width: 920px;
+        margin: 24px auto;
+        border: 1px solid #1d3b50;
+        box-shadow: 0 0 24px rgba(0, 255, 255, 0.15);
+        background: #08111f;
+      }
+
+      .header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #1d3b50;
+        background: #0b1a2b;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.7px;
+      }
+
+      .status {
+        color: #7cff7c;
+        font-size: 14px;
+      }
+
+      .content {
+        padding: 18px;
+      }
+
+      .panel {
+        border: 1px solid #1d3b50;
+        padding: 14px;
+        margin-bottom: 14px;
+        background: #0a1526;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 8px 16px;
+        font-size: 14px;
+      }
+
+      .label {
+        color: #6dc6d8;
+      }
+
+      .value {
+        color: #d4fcff;
+      }
+
+      .summary {
+        font-size: 16px;
+        line-height: 1.5;
+        color: #dcf9ff;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      select {
+        border: 1px solid #2f7ea3;
+        background: #0b2338;
+        color: #bff8ff;
+        padding: 8px;
+        font-family: inherit;
+      }
+
+      button {
+        border: 1px solid #2f7ea3;
+        background: #10304b;
+        color: #bff8ff;
+        padding: 8px 12px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #18476d;
+      }
+
+      .timer {
+        color: #a5fdc5;
+        font-size: 14px;
+      }
+
+      .note {
+        color: #75a8b5;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="terminal">
+      <header class="header">
+        <div class="title">GENEVA POLICE COMPUTER TERMINAL</div>
+        <div class="status">SYSTEM ONLINE • SIMULATION MODE</div>
+      </header>
+
+      <section class="content">
+        <div class="panel controls">
+          <div class="control-group">
+            <label for="crimeTypeSelect" class="label">Crime Type:</label>
+            <select id="crimeTypeSelect"></select>
+          </div>
+          <button id="refreshBtn" type="button">Generate New Incident Report</button>
+          <div class="timer" id="countdownText">Next automatic update in 05:00</div>
+        </div>
+
+        <div class="panel meta" id="metaPanel"></div>
+
+        <div class="panel">
+          <div class="label">INCIDENT NARRATIVE</div>
+          <p class="summary" id="summaryText"></p>
+        </div>
+
+        <div class="note">
+          This page simulates incident reports for interface/design demo purposes.
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
+      let nextUpdateTime = Date.now() + UPDATE_INTERVAL_MS;
+
+      const incidentTypes = [
+        "Burglary",
+        "Vehicle Theft",
+        "Fraud",
+        "Assault",
+        "Robbery",
+        "Vandalism",
+      ];
+
+      const locations = [
+        "Plainpalais District",
+        "Eaux-Vives",
+        "Servette",
+        "Rue du Rhône",
+        "Cornavin Area",
+        "Carouge Border Sector",
+      ];
+
+      const evidenceItems = [
+        "CCTV footage",
+        "witness statement",
+        "forensic trace samples",
+        "digital transaction logs",
+        "vehicle tracking signal",
+        "entry point tool marks",
+      ];
+
+      const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
+
+      const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const formatDateTime = (date) =>
+        new Intl.DateTimeFormat("en-GB", {
+          dateStyle: "medium",
+          timeStyle: "medium",
+          timeZone: "Europe/Zurich",
+        }).format(date);
+
+      const pad = (value) => String(value).padStart(2, "0");
+
+      const populateCrimeTypeSelect = () => {
+        const select = document.getElementById("crimeTypeSelect");
+        select.innerHTML = incidentTypes
+          .map((crimeType) => `<option value="${crimeType}">${crimeType}</option>`)
+          .join("");
+      };
+
+      const updateCountdown = () => {
+        const remaining = Math.max(0, nextUpdateTime - Date.now());
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        document.getElementById("countdownText").innerText =
+          `Next automatic update in ${pad(minutes)}:${pad(seconds)}`;
+      };
+
+      const generateIncidentReport = () => {
+        const now = new Date();
+        const incidentId = `GE-${now.getFullYear()}-${randomInt(10000, 99999)}`;
+        const selectedCrimeType = document.getElementById("crimeTypeSelect").value;
+        const incidentType = selectedCrimeType || randomItem(incidentTypes);
+        const location = randomItem(locations);
+        const victims = randomInt(1, 3);
+        const suspects = randomInt(1, 2);
+        const responseUnits = randomInt(1, 4);
+        const priority = randomItem(["High", "Medium", "Low"]);
+        const evidenceA = randomItem(evidenceItems);
+        const evidenceB = randomItem(evidenceItems.filter((item) => item !== evidenceA));
+
+        const metaFields = [
+          ["Case ID", incidentId],
+          ["Date/Time (Geneva)", formatDateTime(now)],
+          ["Location", location],
+          ["Crime Type", incidentType],
+          ["Priority", priority],
+          ["Victims", String(victims)],
+          ["Suspects", String(suspects)],
+          ["Units Dispatched", String(responseUnits)],
+        ];
+
+        const summary =
+          `At ${formatDateTime(now)}, Geneva dispatch received an active ${incidentType.toLowerCase()} report in ${location}. ` +
+          `${responseUnits} patrol unit(s) were assigned and secured the area. Preliminary interviews identified ${victims} affected civilian(s) and ${suspects} person(s) of interest. ` +
+          `Investigators collected ${evidenceA} and ${evidenceB}. Case remains open pending confirmation of suspect movement and final forensic assessment.`;
+
+        const metaPanel = document.getElementById("metaPanel");
+        metaPanel.innerHTML = metaFields
+          .map(
+            ([label, value]) =>
+              `<div><span class="label">${label}:</span> <span class="value">${value}</span></div>`
+          )
+          .join("");
+
+        document.getElementById("summaryText").innerText = summary;
+
+        nextUpdateTime = Date.now() + UPDATE_INTERVAL_MS;
+        updateCountdown();
+      };
+
+      document.getElementById("refreshBtn").addEventListener("click", generateIncidentReport);
+
+      populateCrimeTypeSelect();
+      generateIncidentReport();
+      setInterval(generateIncidentReport, UPDATE_INTERVAL_MS);
+      setInterval(updateCountdown, 1000);
+    </script>
+  </body>
+</html>
