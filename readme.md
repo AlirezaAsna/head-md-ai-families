@@ -209,10 +209,10 @@ Possible next steps:
 
 
 
-## Authors
+## Designers
 
 Alireza Asnavandi  
-Zainab Ouriachi  
+[Zainab Ouriachi](https://github.com/mynameiszainabouriachi-stack)
 
 Master Media Design  
 HEAD Genève  
