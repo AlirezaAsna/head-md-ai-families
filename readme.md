@@ -5,7 +5,7 @@ Physical interaction prototype using ESP8266 / ESP32, electromagnets, LEDs, and 
 This project was developed for Master Media Design – HEAD Genève in the course AI in Family.  
 The goal is to create a pair of objects that represent a relationship between two people through physical interaction, fading behavior over time, and AI-like interpretation of usage patterns.
 
-![main image](images/final/IMG_3929.jpg)
+![main image](/images/final/IMG_3929.JPG)
 
 
 ## Concept
@@ -60,7 +60,7 @@ The objects can only fully return to their original state when they meet again.
 - 3D printed internal structure
 
 
-![hardware](images/process/IMG_3707.jpg)
+![hardware](images/process/IMG_3707.JPG)
 
 
 Power layout:
@@ -163,7 +163,7 @@ Battery integration is planned for later versions.
 <td><img src="images/process/IMG_3700.JPG" width="300"></td>
 </tr>
 <tr>
-<td><img src="images/process/IMG_3704.jpg" width="300"></td>
+<td><img src="images/process/IMG_3704.JPG" width="300"></td>
 <td><img src="images/process/IMG_3705.JPG" width="300"></td>
 </tr>
 <tr>
